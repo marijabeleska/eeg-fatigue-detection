@@ -219,14 +219,21 @@ def predict(
 def calculate_metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict[str, float | int]:
     predictions = (probabilities >= 0.5).astype(np.int64)
     tn, fp, fn, tp = confusion_matrix(labels, predictions, labels=[0, 1]).ravel()
+    has_both_classes = np.unique(labels).size == 2
     return {
         "accuracy": accuracy_score(labels, predictions),
-        "balanced_accuracy": balanced_accuracy_score(labels, predictions),
+        # Balanced accuracy is the mean of sensitivity and specificity.  It is
+        # not defined for a test subject that contains only one class (MPD-DF
+        # participant 22 contains fatigue windows only), so keep that fold as
+        # NaN instead of reporting a non-comparable single-class recall value.
+        "balanced_accuracy": (
+            balanced_accuracy_score(labels, predictions) if has_both_classes else float("nan")
+        ),
         "precision": precision_score(labels, predictions, zero_division=0),
         "sensitivity_recall": recall_score(labels, predictions, zero_division=0),
         "specificity": tn / (tn + fp) if (tn + fp) else float("nan"),
         "f1": f1_score(labels, predictions, zero_division=0),
-        "roc_auc": roc_auc_score(labels, probabilities) if np.unique(labels).size == 2 else float("nan"),
+        "roc_auc": roc_auc_score(labels, probabilities) if has_both_classes else float("nan"),
         "tn": int(tn),
         "fp": int(fp),
         "fn": int(fn),

@@ -25,6 +25,12 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         default=[f"{number:02d}" for number in range(1, 11)],
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=REPOSITORY_ROOT / "data" / "features" / "frequency_features_4ch_5s.npz",
+        help="Output NPZ path. Use a separate path when generating a new subject cohort.",
+    )
     return parser.parse_args()
 
 
@@ -138,9 +144,8 @@ def main() -> None:
         subject_blocks.append(np.full(features.shape[0], subject, dtype="U2"))
         print(f"Participant {subject}: {features.shape[0]} windows", flush=True)
 
-    output_dir = REPOSITORY_ROOT / "data" / "features"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / "frequency_features_4ch_5s.npz"
+    output_path = args.output
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(
         output_path,
         X=np.vstack(feature_blocks),

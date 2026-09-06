@@ -1,11 +1,8 @@
 # Handoff: low-channel EEG fatigue detection
 
-Овој документ може директно да се испрати во нов Codex разговор за проектот да
-продолжи од сегашната состојба.
-
 ## 1. Цел на проектот
 
-Универзитетски проект за детекција на когнитивен/возачки замор со ниско-канален
+Проект за детекција на когнитивен/возачки замор со ниско-канален
 EEG. Главниот ML pipeline е во Python, а крајниот кориснички интерфејс треба да
 биде Laravel веб-апликација. Планираниот тек е:
 
@@ -38,13 +35,6 @@ MPD-DF EEG
   филтрирање.
 - Прозорец со максимална channel peak-to-peak амплитуда над `200 µV` се означува
   како `possible_artifact`, но не се брише.
-
-Dataset-от локално зафаќа приближно:
-
-- `data/raw`: 2,228 MB (20 датотеки: EEG + annotation за 10 лица)
-- `data/processed`: 125.7 MB
-- `data/features`: 1.7 MB
-- `artifacts`: помалку од 1 MB
 
 ## 3. Preprocessing резултати
 
@@ -125,14 +115,13 @@ EEGNet има подобар F1 од класичните baselines, но Random
 balanced accuracy и ROC AUC. Во `artifacts/eegnet/all/models/` има 10 fold-specific
 модели. Тие се benchmark модели, не се финален deployment модел за API.
 
-## 6. Neuro-GPT белешка
+## 6. Neuro-GPT -  идно продолжување на проектот
 
-Менторката предложи да се разгледа Neuro-GPT/foundation models. Официјалниот
-Neuro-GPT е pre-trained на TUH EEG со 22 канали, 250 Hz и 2-секундни chunks. Нашиот
+Официјалниот Neuro-GPT е pre-trained на TUH EEG со 22 канали, 250 Hz и 2-секундни chunks. Нашиот
 pipeline користи 4 канали, 128 Hz и 5 секунди, па pretrained Neuro-GPT не може
 директно и научно коректно да се fine-tune-ира без channel/sampling adaptation.
 
-Најразумна идна варијанта е:
+Идна идеја:
 
 1. EEGNet да остане главниот low-channel модел.
 2. Neuro-GPT да биде дополнителен/истражувачки benchmark.
@@ -152,12 +141,6 @@ pipeline користи 4 канали, 128 Hz и 5 секунди, па pretrai
 - Neuro-GPT weights: https://huggingface.co/wenhuic/Neuro-GPT
 
 ## 7. Проектна структура и скрипти
-
-Работен root на стариот лаптоп:
-
-```text
-C:\Users\Admin\Documents\ChatGPT\Faks Project
-```
 
 Главни папки:
 
@@ -206,19 +189,7 @@ Python скрипти:
 - `artifacts/eegnet/all/models/eegnet_test_subject_01.pt` ... `_10.pt`
 - `artifacts/eegnet/model_comparison.png`
 
-## 8. Алатки и верзии на стариот лаптоп
-
-Оперативен систем: Windows; командите се извршувани со PowerShell.
-
-- PyCharm Professional/Community: `2024.2.4`
-- Python: `3.13.2`
-- PHP CLI преку XAMPP: `8.2.12`, path `C:\xampp\php\php.exe`
-- Composer: `2.9.2`
-- Node.js: `v22.21.1`
-- npm: `10.9.4`
-- Git for Windows: `2.48.1.windows.1`
-- Laravel skeleton: framework constraint `^12.0`
-- Laravel frontend: Vite 7, Tailwind CSS 4, Axios 1.11
+## 8. Алатки и верзии 
 
 Директните Python зависимости во `ml-service/requirements.txt` се:
 
@@ -231,139 +202,3 @@ requests==2.34.2
 scikit-learn==1.9.0
 torch==2.13.0
 ```
-
-Транзитивните Python пакети автоматски ќе ги инсталира `pip`; не треба рачно да
-се внесуваат сите од `pip freeze`.
-
-Сè уште НЕ се додадени/инсталирани како проектни зависимости:
-
-- FastAPI и Uvicorn (Python prediction API сè уште не е имплементиран);
-- Neuro-GPT repository, `transformers` и pretrained Neuro-GPT weights;
-- CUDA-enabled PyTorch build (досегашното EEGNet обучување беше на CPU).
-
-## 9. Поставување на нов лаптоп
-
-Инсталирај:
-
-1. Git for Windows.
-2. Python 3.13 x64 и додај го во PATH.
-3. PyCharm.
-4. XAMPP/PHP 8.2 или понов компатибилен PHP 8.x.
-5. Composer 2.x.
-6. Node.js 22 LTS и npm.
-
-Потоа отвори го целиот `Faks Project` folder во PyCharm и изврши:
-
-```powershell
-cd "PATH\TO\Faks Project\ml-service"
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-Во PyCharm избери interpreter:
-
-```text
-Faks Project\ml-service\.venv\Scripts\python.exe
-```
-
-Ако новиот лаптоп има NVIDIA GPU, прво провери ја официјалната PyTorch команда
-за CUDA-compatible build. Обичната команда од requirements може да работи на
-CPU, но не гарантира дека ќе ја користи конкретната GPU/CUDA комбинација.
-
-За Laravel:
-
-```powershell
-cd "PATH\TO\Faks Project\web-app"
-composer install
-
-# Само ако .env не е пренесен:
-Copy-Item .env.example .env
-php artisan key:generate
-
-# Ако се користи SQLite и датотеката недостасува:
-New-Item database\database.sqlite -ItemType File -Force
-php artisan migrate
-
-npm install
-npm run build
-```
-
-На стариот лаптоп `web-app/vendor` постои, но е нецелосен и недостасува
-`vendor/autoload.php`. Затоа на новиот лаптоп мора да се изврши `composer install`.
-Laravel функционалноста за EEG сè уште не е имплементирана.
-
-## 10. Пренос на проектот
-
-Најсигурно е целиот root folder да се копира преку надворешен диск, но може да
-се прескокнат генерираните dependency папки:
-
-- НЕ мора да се копира `ml-service/.venv` (околу 920 MB со пакетите).
-- НЕ мора да се копира `web-app/vendor` бидејќи е нецелосен.
-- НЕ мора да се копира `web-app/node_modules`, ако постои.
-- По желба може да се прескокне `.idea` и повторно да се отвори проектот.
-
-Треба да се копираат:
-
-- целиот source code;
-- `data/raw` ако сакаме 22-channel/Neuro-GPT или повторен preprocessing;
-- `data/processed` и `data/features` за веднаш да продолжи ML работата;
-- `artifacts` за резултатите, графиците и EEGNet fold моделите;
-- `.env` само преку приватен пренос, никогаш во јавен Git repository.
-
-Тековниот Git repository нема commits и сите главни папки се untracked.
-Дополнително, root `.gitignore` намерно ги игнорира `data/*`, `artifacts/`,
-`ml-service/.venv`, `.idea` и Python cache. Затоа обично Git push нема да ги
-пренесе dataset-от, резултатите или моделите; тие мора да се копираат одделно.
-
-Ако raw data не се копира, може повторно да се преземе:
-
-```powershell
-cd ml-service
-.\.venv\Scripts\Activate.ps1
-python scripts\download_mpd_df.py --subjects 01 02 03 04 05 06 07 08 09 10
-```
-
-Потоа pipeline-от може целосно да се регенерира:
-
-```powershell
-python scripts\preprocess_all.py --subjects 01 02 03 04 05 06 07 08 09 10
-python scripts\summarize_processed.py --subjects 01 02 03 04 05 06 07 08 09 10
-python scripts\extract_features.py --subjects 01 02 03 04 05 06 07 08 09 10
-python scripts\benchmark_baseline.py
-python scripts\train_eegnet.py --epochs 15 --patience 3
-python scripts\plot_model_comparison.py
-```
-
-## 11. Следни задачи
-
-Продолжи по овој редослед:
-
-1. Направи channel benchmark со иста LOSO поставеност:
-   - 1 канал: O1 или O2;
-   - 2 канали: O1/O2 и споредбено C3/C4;
-   - 4 канали: C3/C4/O1/O2 (веќе постои).
-2. Одлучи со менторката дали Neuro-GPT мора практично да се имплементира или е
-   доволен related-work/feasibility дел.
-3. Ако се имплементира Neuro-GPT, направи посебен 22-channel preprocessing и
-   прво пробај encoder-only fine-tuning; не менувај го постојниот 4-channel
-   dataset/output.
-4. По изборот на најсоодветен модел, обучи еден финален deployment модел на сите
-   достапни training subjects. LOSO fold моделите не се deployment модел.
-5. Имплементирај FastAPI endpoint за prediction и зачувување JSON/CSV резултати.
-6. Доврши Laravel dashboard и поврзи го со FastAPI.
-7. Прошири го dataset-от на околу 30 испитаници и повтори ја финалната LOSO
-   евалуација.
-
-## 12. Почетна порака за нов Codex разговор
-
-Копирај го следново заедно со овој документ:
-
-> Продолжи го проектот опишан во `PROJECT_HANDOFF.md`. Прво провери ја локалната
-> структура, Python interpreter-от, достапноста на `data/processed`,
-> `data/features` и `artifacts`, без да ги бришеш или регенерираш ако се валидни.
-> Потоа продолжи со subject-independent benchmark на бројот и изборот на EEG
-> канали. Задржи LOSO без subject leakage, користи balanced accuracy, F1,
-> sensitivity, specificity и ROC AUC, и објаснувај ги чекорите на едноставен
-> македонски јазик.

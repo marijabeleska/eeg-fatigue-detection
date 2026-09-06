@@ -58,10 +58,15 @@ def build_models() -> dict[str, object]:
 def metrics(y_true: np.ndarray, y_pred: np.ndarray, probabilities: np.ndarray) -> dict[str, float | int]:
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
     specificity = tn / (tn + fp) if (tn + fp) else float("nan")
-    auc = roc_auc_score(y_true, probabilities) if np.unique(y_true).size == 2 else float("nan")
+    has_both_classes = np.unique(y_true).size == 2
+    auc = roc_auc_score(y_true, probabilities) if has_both_classes else float("nan")
     return {
         "accuracy": accuracy_score(y_true, y_pred),
-        "balanced_accuracy": balanced_accuracy_score(y_true, y_pred),
+        # Balanced accuracy is not defined for a held-out subject that contains
+        # only one class (participant 22 in the current MPD-DF cohort).
+        "balanced_accuracy": (
+            balanced_accuracy_score(y_true, y_pred) if has_both_classes else float("nan")
+        ),
         "precision": precision_score(y_true, y_pred, zero_division=0),
         "sensitivity_recall": recall_score(y_true, y_pred, zero_division=0),
         "specificity": specificity,
